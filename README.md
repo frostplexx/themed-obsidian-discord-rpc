@@ -9,8 +9,9 @@
 A customizable **Discord Rich Presence (RPC) plugin** for Obsidian, allowing you to showcase your notes, vault, and current activity directly on your Discord profile. Tailored for super users who love personalization and aesthetics.
 
 > [!IMPORTANT]
-> NOW every png that wasn't in the repo are available in my repo and from this version and now on the plugin will use the repo's png's to show the discord images in the rpc 
-old versions are now not working so consider updating to 1.3.0 or above
+> **Breaking Change — v1.3.0**
+> Starting from this version, the plugin uses theme images hosted in the repository instead of Discord's asset system.
+> Old versions are no longer supported. Please update to **v1.3.0 or above**.
 
 ## Preview 🖼️ 
 
