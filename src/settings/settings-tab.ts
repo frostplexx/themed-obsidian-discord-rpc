@@ -1,8 +1,7 @@
 import { PluginSettingTab, Setting, App } from "obsidian";
 import { Logger } from "src/logger";
 import ObsidianDiscordRPC from "src/main";
-import { PluginState } from './settings';
-import { ThemeStyle, THEME_OPTIONS } from './themes';
+import { ThemeStyle, PluginState } from './settings';
 
 export class DiscordRPCSettingsTab extends PluginSettingTab {
   public logger: Logger;
@@ -220,23 +219,30 @@ export class DiscordRPCSettingsTab extends PluginSettingTab {
       new Setting(containerEl)
           .setName('Theme style')
           .setDesc('Choose the theme style for Discord Rich Presence')
-          .addDropdown(dropdown => {
-              Object.entries(THEME_OPTIONS).forEach(([value, label]) => {
-                  dropdown.addOption(value, label);
-              });
-              return dropdown
-                  .setValue(plugin.settings.themeStyle)
-                  .onChange(async (value) => {
-                      plugin.settings.themeStyle = value as ThemeStyle;
-                      await plugin.saveData(plugin.settings);
-                      if (plugin.getState() === PluginState.connected) {
-                          await plugin.setActivity(
-                              plugin.app.vault.getName(),
-                              plugin.currentFile?.basename ?? "...",
-                              plugin.currentFile?.extension ?? ""
-                          );
-                      }
-                  });
-          });
+          .addDropdown(dropdown => dropdown
+              .addOption(ThemeStyle.Default_dark, 'Default Dark (Old)')
+              .addOption(ThemeStyle.Default_light, 'Default Light (Old)')
+              .addOption(ThemeStyle.Default_new_dark, 'Default Dark (New)')
+              .addOption(ThemeStyle.Default_new_light, 'Default Light (New)')
+              .addOption(ThemeStyle.Catppuccin_Latte, 'Catppuccin Latte')
+              .addOption(ThemeStyle.Catppuccin_Frappe, 'Catppuccin Frappe')
+              .addOption(ThemeStyle.Catppuccin_Macchiato, 'Catppuccin Macchiato')
+              .addOption(ThemeStyle.Catppuccin_Mocha, 'Catppuccin Mocha')
+              .addOption(ThemeStyle.Cyberglow_Dark, 'Cyberglow Dark')
+              .addOption(ThemeStyle.Cyberglow_Light, 'Cyberglow Light')
+              .addOption(ThemeStyle.Tokyo_night_Dark, 'Tokyo Night Dark')
+              .addOption(ThemeStyle.Tokyo_night_Light, 'Tokyo Night Light')
+              .setValue(plugin.settings.themeStyle)
+              .onChange(async (value) => {
+                  plugin.settings.themeStyle = value as ThemeStyle;
+                  await plugin.saveData(plugin.settings);
+                  if (plugin.getState() === PluginState.connected) {
+                      await plugin.setActivity(
+                          plugin.app.vault.getName(),
+                          plugin.currentFile?.basename ?? "...",
+                          plugin.currentFile?.extension ?? ""
+                      );
+                  }
+              }));
   }
 }
