@@ -1,19 +1,20 @@
 import { Client } from "discord-rpc";
-import { MarkdownView, Plugin, PluginManifest, TFile } from "obsidian";
+import { MarkdownView, Plugin, PluginManifest, TFile, Notice } from "obsidian";
 import { Logger } from "./logger";
 import { DiscordRPCSettings, PluginState } from "./settings/settings";
 import { DiscordRPCSettingsTab } from "./settings/settings-tab";
 import { StatusBar } from "./status-bar";
+import { getThemeImageUrl } from "./theme-manager";
 
 export default class ObsidianDiscordRPC extends Plugin {
-  public state: PluginState;
-  public settings: DiscordRPCSettings;
-  public statusBar: StatusBar;
-  public rpc: Client;
+  public state!: PluginState;
+  public settings!: DiscordRPCSettings;
+  public statusBar!: StatusBar;
+  public rpc!: Client;
   public logger: Logger = new Logger(this);
-  public currentFile: TFile;
-  public loadedTime: Date;
-  public lastSetTime: Date;
+  public currentFile!: TFile;
+  public loadedTime!: Date;
+  public lastSetTime!: Date;
 
   setState(state: PluginState) {
     this.state = state;
@@ -38,7 +39,7 @@ export default class ObsidianDiscordRPC extends Plugin {
     this.settings = (await this.loadData()) || new DiscordRPCSettings();
 
     this.registerEvent(
-      this.app.workspace.on("file-open", this.onFileOpen, this)
+      this.app.workspace.on("file-open" as any, this.onFileOpen, this)
     );
 
     this.registerInterval(
@@ -202,12 +203,15 @@ export default class ObsidianDiscordRPC extends Plugin {
       }
       this.lastSetTime = date;
 
+      // Get the appropriate image URL from GitHub
+      const largeImageKey = await getThemeImageUrl(this.settings.themeStyle);
+
       if (this.settings.privacyMode) {
         await this.rpc.setActivity({
           details: `Editing Notes`,
           state: `Working in a Vault`,
           startTimestamp: date,
-          largeImageKey: this.settings.themeStyle,
+          largeImageKey: largeImageKey,
           largeImageText: "no info just privacy mode",
         });
       } else if (
@@ -220,7 +224,7 @@ export default class ObsidianDiscordRPC extends Plugin {
           details: `Editing ${file}`,
           state: `Vault: ${vault}  ▸ ${folderPath}`,
           startTimestamp: date,
-          largeImageKey: this.settings.themeStyle,
+          largeImageKey: largeImageKey,
           largeImageText: "I'm thinking!",
         });
       } else if (
@@ -231,7 +235,7 @@ export default class ObsidianDiscordRPC extends Plugin {
           details: `Editing ${file}`,
           state: `Vault: ${vault}`,
           startTimestamp: date,
-          largeImageKey: this.settings.themeStyle,
+          largeImageKey: largeImageKey,
           largeImageText: "I'm thinking!",
         });
       } else if (
@@ -243,27 +247,27 @@ export default class ObsidianDiscordRPC extends Plugin {
           details: `Editing: ${file}`,
           state: `Folder: ${folderPath}`,
           startTimestamp: date,
-          largeImageKey: this.settings.themeStyle,
+          largeImageKey: largeImageKey,
           largeImageText: "I'm thinking!",
         });
       } else if (this.settings.showVaultName) {
         await this.rpc.setActivity({
           state: `Vault: ${vault}`,
           startTimestamp: date,
-          largeImageKey: this.settings.themeStyle,
+          largeImageKey: largeImageKey,
           largeImageText: "Obsidian",
         });
       } else if (this.settings.showCurrentFileName) {
         await this.rpc.setActivity({
           details: `Editing ${file}`,
           startTimestamp: date,
-          largeImageKey: this.settings.themeStyle,
+          largeImageKey: largeImageKey,
           largeImageText: "I'm thinking!",
         });
       } else {
         await this.rpc.setActivity({
           startTimestamp: date,
-          largeImageKey: this.settings.themeStyle,
+          largeImageKey: largeImageKey,
           largeImageText: "Obsidian",
         });
       }

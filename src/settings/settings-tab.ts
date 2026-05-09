@@ -1,7 +1,8 @@
 import { PluginSettingTab, Setting, App } from "obsidian";
 import { Logger } from "src/logger";
 import ObsidianDiscordRPC from "src/main";
-import { ThemeStyle, PluginState } from './settings';
+import { PluginState } from './settings';
+import { getAllThemesWithDisplay } from "src/theme-manager";
 
 export class DiscordRPCSettingsTab extends PluginSettingTab {
   public logger: Logger;
@@ -216,33 +217,63 @@ export class DiscordRPCSettingsTab extends PluginSettingTab {
         })
       );
       new Setting(containerEl).setName('Theme style').setHeading();
+      
+      // Load themes dynamically from GitHub
+      this.loadThemeSelector(containerEl, plugin);
+  }
+
+  /**
+   * Load theme selector dynamically from GitHub themes
+   */
+  private async loadThemeSelector(containerEl: HTMLElement, plugin: ObsidianDiscordRPC): Promise<void> {
+    try {
+      const themes = await getAllThemesWithDisplay();
+
+      // Always show the dropdown with available themes (either from GitHub or fallback)
       new Setting(containerEl)
-          .setName('Theme style')
-          .setDesc('Choose the theme style for Discord Rich Presence')
-          .addDropdown(dropdown => dropdown
-              .addOption(ThemeStyle.Default_dark, 'Default Dark (Old)')
-              .addOption(ThemeStyle.Default_light, 'Default Light (Old)')
-              .addOption(ThemeStyle.Default_new_dark, 'Default Dark (New)')
-              .addOption(ThemeStyle.Default_new_light, 'Default Light (New)')
-              .addOption(ThemeStyle.Catppuccin_Latte, 'Catppuccin Latte')
-              .addOption(ThemeStyle.Catppuccin_Frappe, 'Catppuccin Frappe')
-              .addOption(ThemeStyle.Catppuccin_Macchiato, 'Catppuccin Macchiato')
-              .addOption(ThemeStyle.Catppuccin_Mocha, 'Catppuccin Mocha')
-              .addOption(ThemeStyle.Cyberglow_Dark, 'Cyberglow Dark')
-              .addOption(ThemeStyle.Cyberglow_Light, 'Cyberglow Light')
-              .addOption(ThemeStyle.Tokyo_night_Dark, 'Tokyo Night Dark')
-              .addOption(ThemeStyle.Tokyo_night_Light, 'Tokyo Night Light')
-              .setValue(plugin.settings.themeStyle)
-              .onChange(async (value) => {
-                  plugin.settings.themeStyle = value as ThemeStyle;
-                  await plugin.saveData(plugin.settings);
-                  if (plugin.getState() === PluginState.connected) {
-                      await plugin.setActivity(
-                          plugin.app.vault.getName(),
-                          plugin.currentFile?.basename ?? "...",
-                          plugin.currentFile?.extension ?? ""
-                      );
-                  }
-              }));
+        .setName('Theme style')
+        .setDesc('Choose the theme style for Discord Rich Presence')
+        .addDropdown(dropdown => {
+          // Add all themes 
+          themes.forEach(theme => {
+            dropdown.addOption(theme.name, theme.displayName);
+          });
+
+          // Set current value, fallback to first theme if not found
+          const currentValue = plugin.settings.themeStyle;
+          const themeExists = themes.some(t => t.name === currentValue);
+          
+          dropdown.setValue(themeExists ? currentValue : (themes[0]?.name || 'default-new-dark'));
+          
+          dropdown.onChange(async (value) => {
+            plugin.settings.themeStyle = value;
+            await plugin.saveData(plugin.settings);
+            if (plugin.getState() === PluginState.connected) {
+              await plugin.setActivity(
+                plugin.app.vault.getName(),
+                plugin.currentFile?.basename ?? "...",
+                plugin.currentFile?.extension ?? ""
+              );
+            }
+          });
+        });
+    } catch (error) {
+      console.error('Error loading theme selector:', error);
+      new Setting(containerEl)
+        .setName('Theme style')
+        .setDesc('Error loading themes. Using defaults.')
+        .addButton(btn => btn
+          .setButtonText('Retry')
+          .onClick(() => {
+            // Clear the container and try again
+            const parent = containerEl.parentElement;
+            if (parent) {
+              containerEl.remove();
+              const newContainer = parent.createDiv();
+              this.loadThemeSelector(newContainer, plugin);
+            }
+          })
+        );
+    }
   }
 }
