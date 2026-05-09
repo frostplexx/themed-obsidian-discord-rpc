@@ -1,0 +1,62 @@
+[
+  {
+    "name": "default-old-dark",
+    "displayName": "Default Dark (Old)",
+    "filename": "default-old-dark.png"
+  },
+  {
+    "name": "default-old-light",
+    "displayName": "Default Light (Old)",
+    "filename": "default-old-light.png"
+  },
+  {
+    "name": "default-new-dark",
+    "displayName": "Default Dark (New)",
+    "filename": "default-new-dark.png"
+  },
+  {
+    "name": "default-new-light",
+    "displayName": "Default Light (New)",
+    "filename": "default-new-light.png"
+  },
+  {
+    "name": "catppuccin-latte",
+    "displayName": "Catppuccin Latte",
+    "filename": "catppuccin-latte.png"
+  },
+  {
+    "name": "catppuccin-frappe",
+    "displayName": "Catppuccin Frappe",
+    "filename": "catppuccin-frappe.png"
+  },
+  {
+    "name": "catppuccin-macchiato",
+    "displayName": "Catppuccin Macchiato",
+    "filename": "catppuccin-macchiato.png"
+  },
+  {
+    "name": "catppuccin-mocha",
+    "displayName": "Catppuccin Mocha",
+    "filename": "catppuccin-mocha.png"
+  },
+  {
+    "name": "cyberglow-dark",
+    "displayName": "Cyberglow Dark",
+    "filename": "cyberglow-dark.png"
+  },
+  {
+    "name": "cyberglow-light",
+    "displayName": "Cyberglow Light",
+    "filename": "cyberglow-light.png"
+  },
+  {
+    "name": "tokyo-night-dark",
+    "displayName": "Tokyo Night Dark",
+    "filename": "tokyo-night-dark.png"
+  },
+  {
+    "name": "tokyo-night-light",
+    "displayName": "Tokyo Night Light",
+    "filename": "tokyo-night-light.png"
+  }
+]
