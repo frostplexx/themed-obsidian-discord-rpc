@@ -1,20 +1,17 @@
-import { PluginSettingTab, Setting, App, Notice } from "obsidian";
+import { PluginSettingTab, Setting, App } from "obsidian";
 import { Logger } from "src/logger";
 import ObsidianDiscordRPC from "src/main";
 import { PluginState } from './settings';
 import { ThemeStyle, THEME_OPTIONS } from './themes';
-import { ThemeDownloader } from './theme-downloader';
 
 export class DiscordRPCSettingsTab extends PluginSettingTab {
   public logger: Logger;
   private plugin: ObsidianDiscordRPC;
-  private themeDownloader: ThemeDownloader;
 
   constructor(app: App, plugin: ObsidianDiscordRPC) {
     super(app, plugin);
     this.plugin = plugin;
     this.logger = new Logger(plugin);
-    this.themeDownloader = new ThemeDownloader();
   }
 
   display(): void {
@@ -224,7 +221,7 @@ export class DiscordRPCSettingsTab extends PluginSettingTab {
           .setName('Theme style')
           .setDesc('Choose the theme style for Discord Rich Presence')
           .addDropdown(dropdown => {
-              Object.entries(THEME_OPTIONS).forEach(([value, label]: [string, string]) => {
+              Object.entries(THEME_OPTIONS).forEach(([value, label]) => {
                   dropdown.addOption(value, label);
               });
               return dropdown
@@ -241,78 +238,5 @@ export class DiscordRPCSettingsTab extends PluginSettingTab {
                       }
                   });
           });
-
-      new Setting(containerEl).setName('Download Themes').setHeading();
-      new Setting(containerEl)
-          .setName('Download all themes')
-          .setDesc('Download all theme images from GitHub and cache them locally')
-          .addButton(button => button
-              .setButtonText('Download All')
-              .onClick(async () => {
-                  button.setDisabled(true);
-                  button.setButtonText('Downloading...');
-                  try {
-                      await this.themeDownloader.downloadAllThemes(this.plugin.getDataPath(), this.plugin.app.vault.adapter);
-                      new Notice('✅ All themes downloaded successfully!');
-                  } catch (error) {
-                      new Notice(`❌ Download failed: ${error}`);
-                  } finally {
-                      button.setDisabled(false);
-                      button.setButtonText('Download All');
-                  }
-              }));
-
-      new Setting(containerEl)
-          .setName('Update themes')
-          .setDesc('Check for new themes and download any missing ones')
-          .addButton(button => button
-              .setButtonText('Update Themes')
-              .onClick(async () => {
-                  button.setDisabled(true);
-                  button.setButtonText('Checking...');
-                  try {
-                      const result = await this.themeDownloader.updateThemes(this.plugin.getDataPath(), this.plugin.app.vault.adapter);
-                      if (result.updated.length > 0) {
-                          new Notice(`✅ Downloaded ${result.updated.length} new theme(s):\n${result.updated.join(', ')}`);
-                      } else {
-                          new Notice('✅ All themes are up to date!');
-                      }
-                  } catch (error) {
-                      new Notice(`❌ Update failed: ${error}`);
-                  } finally {
-                      button.setDisabled(false);
-                      button.setButtonText('Update Themes');
-                  }
-              }));
-
-      let selectedThemeForDownload = plugin.settings.themeStyle;
-      new Setting(containerEl)
-          .setName('Download specific theme')
-          .setDesc('Select a theme and download just that one')
-          .addDropdown(dropdown => {
-              Object.entries(THEME_OPTIONS).forEach(([value, label]: [string, string]) => {
-                  dropdown.addOption(value, label);
-              });
-              dropdown.setValue(plugin.settings.themeStyle);
-              dropdown.onChange((value) => {
-                  selectedThemeForDownload = value as ThemeStyle;
-              });
-              return dropdown;
-          })
-          .addButton(button => button
-              .setButtonText('Download Selected')
-              .onClick(async () => {
-                  button.setDisabled(true);
-                  button.setButtonText('Downloading...');
-                  try {
-                      await this.themeDownloader.downloadTheme(selectedThemeForDownload, this.plugin.getDataPath(), this.plugin.app.vault.adapter);
-                      new Notice(`✅ ${THEME_OPTIONS[selectedThemeForDownload]} downloaded successfully!`);
-                  } catch (error) {
-                      new Notice(`❌ Download failed: ${error}`);
-                  } finally {
-                      button.setDisabled(false);
-                      button.setButtonText('Download Selected');
-                  }
-              }));
   }
 }

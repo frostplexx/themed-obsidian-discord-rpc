@@ -4,19 +4,16 @@ import { Logger } from "./logger";
 import { DiscordRPCSettings, PluginState } from "./settings/settings";
 import { DiscordRPCSettingsTab } from "./settings/settings-tab";
 import { StatusBar } from "./status-bar";
-import { ThemeStyle } from "./settings/themes";
-import { ThemeDownloader } from "./settings/theme-downloader";
 
 export default class ObsidianDiscordRPC extends Plugin {
-  public state: PluginState = PluginState.disconnected;
-  public settings: DiscordRPCSettings = new DiscordRPCSettings();
-  public statusBar!: StatusBar;
-  public rpc!: Client;
+  public state: PluginState;
+  public settings: DiscordRPCSettings;
+  public statusBar: StatusBar;
+  public rpc: Client;
   public logger: Logger = new Logger(this);
-  public currentFile!: TFile;
-  public loadedTime!: Date;
-  public lastSetTime!: Date;
-  private themeDownloader!: ThemeDownloader;
+  public currentFile: TFile;
+  public loadedTime: Date;
+  public lastSetTime: Date;
 
   setState(state: PluginState) {
     this.state = state;
@@ -34,25 +31,11 @@ export default class ObsidianDiscordRPC extends Plugin {
     return this.manifest;
   }
 
-  public getDataPath(): string {
-    return `${this.app.vault.adapter['basePath']}/.obsidian/plugins/${this.manifest.id}`;
-  }
-
   async onload() {
     const statusBarEl = this.addStatusBarItem();
     this.statusBar = new StatusBar(statusBarEl);
-    this.themeDownloader = new ThemeDownloader();
-
-    // Ensure data folder exists
-    const dataPath = this.getDataPath();
-    if (!(await this.app.vault.adapter.exists(dataPath))) {
-      await this.app.vault.adapter.mkdir(dataPath);
-    }
 
     this.settings = (await this.loadData()) || new DiscordRPCSettings();
-
-    // Auto-download themes if not already downloaded
-    this.autoDownloadThemesIfNeeded(dataPath);
 
     this.registerEvent(
       this.app.workspace.on("file-open", this.onFileOpen, this)
@@ -219,31 +202,13 @@ export default class ObsidianDiscordRPC extends Plugin {
       }
       this.lastSetTime = date;
 
-      const themeImagePath = this.getThemeImagePath(this.settings.themeStyle);
-      let useLocalImage = await this.app.vault.adapter.exists(themeImagePath);
-
-      // If theme image doesn't exist, try to download it
-      if (!useLocalImage) {
-        try {
-          const dataPath = this.getDataPath();
-          this.logger.log(`Downloading missing theme: ${this.settings.themeStyle}...`, false);
-          await this.themeDownloader.downloadTheme(this.settings.themeStyle, dataPath, this.app.vault.adapter);
-          useLocalImage = true;
-          this.logger.log(`✅ Theme downloaded successfully!`, this.settings.showPopups);
-        } catch (error) {
-          this.logger.log(`⚠️ Failed to download theme. Download manually in settings.`, this.settings.showPopups);
-        }
-      }
-
-      const largeImage = useLocalImage ? { largeImagePath: themeImagePath } : {};
-
       if (this.settings.privacyMode) {
         await this.rpc.setActivity({
           details: `Editing Notes`,
           state: `Working in a Vault`,
           startTimestamp: date,
+          largeImageKey: this.settings.themeStyle,
           largeImageText: "no info just privacy mode",
-          ...largeImage,
         });
       } else if (
         this.settings.showVaultName &&
@@ -255,8 +220,8 @@ export default class ObsidianDiscordRPC extends Plugin {
           details: `Editing ${file}`,
           state: `Vault: ${vault}  ▸ ${folderPath}`,
           startTimestamp: date,
+          largeImageKey: this.settings.themeStyle,
           largeImageText: "I'm thinking!",
-          ...largeImage,
         });
       } else if (
         this.settings.showVaultName &&
@@ -266,8 +231,8 @@ export default class ObsidianDiscordRPC extends Plugin {
           details: `Editing ${file}`,
           state: `Vault: ${vault}`,
           startTimestamp: date,
+          largeImageKey: this.settings.themeStyle,
           largeImageText: "I'm thinking!",
-          ...largeImage,
         });
       } else if (
         this.settings.showFolderName &&
@@ -278,57 +243,30 @@ export default class ObsidianDiscordRPC extends Plugin {
           details: `Editing: ${file}`,
           state: `Folder: ${folderPath}`,
           startTimestamp: date,
+          largeImageKey: this.settings.themeStyle,
           largeImageText: "I'm thinking!",
-          ...largeImage,
         });
       } else if (this.settings.showVaultName) {
         await this.rpc.setActivity({
           state: `Vault: ${vault}`,
           startTimestamp: date,
+          largeImageKey: this.settings.themeStyle,
           largeImageText: "Obsidian",
-          ...largeImage,
         });
       } else if (this.settings.showCurrentFileName) {
         await this.rpc.setActivity({
           details: `Editing ${file}`,
           startTimestamp: date,
+          largeImageKey: this.settings.themeStyle,
           largeImageText: "I'm thinking!",
-          ...largeImage,
         });
       } else {
         await this.rpc.setActivity({
           startTimestamp: date,
+          largeImageKey: this.settings.themeStyle,
           largeImageText: "Obsidian",
-          ...largeImage,
         });
       }
-    }
-  }
-
-  private getThemeImagePath(themeStyle: ThemeStyle): string {
-    const dataPath = this.getDataPath();
-    return `${dataPath}/theme-${themeStyle}.png`;
-  }
-
-  private getPluginPath(): string {
-    return this.manifest.dir || (this.app.vault.adapter as any)['basePath'];
-  }
-
-  private async autoDownloadThemesIfNeeded(dataPath: string): Promise<void> {
-    try {
-      // Check if any theme image already exists
-      const files = await this.app.vault.adapter.list(dataPath);
-      const themesExist = files.files.some((file: string) => 
-        file.startsWith('theme-') && file.endsWith('.png')
-      );
-
-      if (!themesExist) {
-        this.logger.log('Auto-downloading themes...', false);
-        await this.themeDownloader.downloadAllThemes(dataPath, this.app.vault.adapter);
-        this.logger.log('✅ Themes downloaded successfully!', this.settings.showPopups);
-      }
-    } catch (error) {
-      this.logger.log(`⚠️ Failed to auto-download themes: ${error}`, this.settings.showPopups);
     }
   }
 }
