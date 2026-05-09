@@ -19,7 +19,8 @@ export class ThemeDownloader {
       
       // Save to plugin data folder
       const themePath = `${dataPath}/theme-${themeStyle}.png`;
-      await adapter.writeBinary(themePath, response.arrayBuffer);
+      const base64Data = btoa(String.fromCharCode.apply(null, new Uint8Array(response.arrayBuffer) as any));
+      await adapter.writeBinary(themePath, Buffer.from(base64Data, 'base64'));
       
       return;
     } catch (error) {

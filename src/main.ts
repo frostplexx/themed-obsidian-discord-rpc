@@ -35,7 +35,7 @@ export default class ObsidianDiscordRPC extends Plugin {
   }
 
   public getDataPath(): string {
-    return `${this.app.vault.configDir}/plugins/${this.manifest.id}`;
+    return `${this.app.vault.adapter['basePath']}/.obsidian/plugins/${this.manifest.id}`;
   }
 
   async onload() {
